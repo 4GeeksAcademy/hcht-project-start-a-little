@@ -8,6 +8,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(20), unique=False, nullable=False)
+    is_active = db.Column(db.Boolean, nullable=False)
+    user_role = db.Column(db.Enum('user', 'admin', 'reader', name='user_role'), nullable=False)
     name = db.Column(db.String(60), unique=False, nullable=False)
     phone = db.Column(db.String(15), unique=False, nullable=True)
 
@@ -18,6 +20,8 @@ class User(db.Model):
         # do not serialize the password, its a security breach
         return {"id": self.id,
                 "email": self.email,
+                "is_active": self.is_active,
+                "user_role": self.user_role,
                 "name": self.name,
                 "phone": self.phone}
 
@@ -68,4 +72,6 @@ class Follower(db.Model):
     follower = db.relationship('User', foreign_keys=[follower_id])
    
     def serialize(self):
-        return {"id": self.id}
+        return {"id": self.id,
+                "user_id": self.user_id,
+                "follower_id": self.follower_id}
