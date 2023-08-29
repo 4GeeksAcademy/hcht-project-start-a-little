@@ -61,11 +61,11 @@ class Comment(db.Model):
 class Follower(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # ForeinKey & relationship
-    """ user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # id 1
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # id 1
     user = db.relationship('User', foreign_keys=[user_id])
     # ForeinKey & relationship
     follower_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # id 3
     follower = db.relationship('User', foreign_keys=[follower_id])
-    """
+   
     def serialize(self):
         return {"id": self.id}
