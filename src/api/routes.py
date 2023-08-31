@@ -5,9 +5,40 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 from flask import Flask, request, Blueprint, jsonify
 from api.utils import generate_sitemap, APIException
 from api.models import db, User
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
 
 
 api = Blueprint('api', __name__)
+
+
+# Create a route to authenticate your users and return JWTs. The
+# create_access_token() function is used to actually generate the JWT.
+@api.route("/login", methods=["POST"])
+def login():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+    # aquí realizamos la consulta a nuestra DB
+    # email, password, is_active=true
+    user = db.one_or_404(db.select(User).filter_by(email=email, password=password, is_active=True),
+                         description=f"User not found: < {email} >")
+    access_token = create_access_token(identity=email)
+    response_body = {'access_token': access_token,
+                     'message': 'User logged',
+                     'email': email,
+                     'status': 'ok'}
+    return response_body, 200
+
+
+# Protect a route with jwt_required, which will kick out requests
+# without a valid JWT present.
+@api.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
 
 
 @api.route('/hello', methods=['POST', 'GET'])
@@ -29,6 +60,8 @@ def handle_users():
         request_body = request.get_json()
         user = User(email = request_body["email"],
                     password = request_body["password"],
+                    is_active = request_body["is_active"],
+                    user_role = request_body["user_role"],
                     name = request_body["name"],
                     phone = request_body["phone"])
         db.session.add(user)
@@ -41,6 +74,7 @@ def handle_users():
 
 
 @api.route('/users/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@jwt_required()
 def handle_user(id):
     if request.method == 'GET':
         user = db.get_or_404(User, id)
